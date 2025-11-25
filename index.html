@@ -858,24 +858,20 @@
         const respuestasPredeterminadas = {
             'HIS MINSA': {
                 'Olvidé mi contraseña': 'Se reestableció su contraseña, revise en su correo el mensaje enviado y cambie su contraseña temporal.',
-                'Usuario Inactivo-Bloqueado': 'Su cuenta fue activada, Ingrese al sistema máximo hoy a las 8pm',
-                'Creación de Usuario': 'Se aperturó su cuenta, revise en su correo el mensaje enviado y cambie su contraseña temporal. Enlace: https://websalud.minsa.gob.pe/hisminsa/'
+                'Usuario Inactivo': 'Su cuenta fue activada, Ingrese al sistema máximo hoy a las 8pm',
+                'Creación de Usuario': 'Se aperturó su cuenta, revise en su correo el mensaje enviado y cambie su contraseña temporal.\n\nEnlace: https://his.minsa.gob.pe/ \n\nTomar en cuenta lo siguiente:\n- Su nueva contrase debe contener como mínimo 9 caracteres, una letra mayúscula, una letra minúscula, un número y un carácter especial.\n- Tienes hasta hoy 8 P.M para cambiar tu contraseña temporal.'
             },
             'SIHCE': {
                 'Olvidé mi contraseña': 'Se reestableció su contraseña, revise en su correo el mensaje enviado y cambie su contraseña temporal.',
-                'Usuario Inactivo-Bloqueado': 'Su cuenta fue activada, Ingrese al sistema máximo hoy a las 8pm',
-                'Creación de Usuario': 'Se aperturó su cuenta, revise en su correo el mensaje enviado y cambie su contraseña temporal.'
+                'Usuario Inactivo': 'Su cuenta fue activada, Ingrese al sistema máximo hoy a las 8pm',
+                'Creación de Usuario': 'Se aperturó su cuenta, revise en su correo el mensaje enviado y cambie su contraseña temporal.\n\nEnlace: https://sihce.minsa.gob.pe/ \n\nTomar en cuenta lo siguiente:\n- Su nueva contrase debe contener como mínimo 9 caracteres, una letra mayúscula, una letra minúscula, un número y un carácter especial.\n- Tienes hasta hoy 8 P.M para cambiar tu contraseña temporal.'
             },
             'SUSALUD': {
-                'Creación de Usuario': 'Se aperturó su cuenta, revise en su correo el mensaje enviado y cambie su contraseña temporal. Enlace: https://app8.susalud.gob.pe:8380/',
+                'Creación de Usuario': 'Se aperturó su cuenta, revise en su correo el mensaje enviado y cambie su contraseña temporal.',
                 'Olvidé mi contraseña': 'Se reestableció su contraseña, revise en su correo el mensaje enviado y cambie su contraseña temporal.'
             },
             'FICHAS FAMILIARES': {
-                'Creación de Usuario': 'Su cuenta fue creada, usuario y contraseña es su Nro. DNI. Enlace: https://fichafamiliar.diresahuanuco.gob.pe/',
-                'Olvidé mi contraseña': 'Se reestableció su contraseña, para acceder use su Nro. DNI como contraseña'
-            },
-            'SALUD FAMILIAR': {
-                'Creación de Usuario': 'Su cuenta fue creada, usuario y contraseña es su Nro. DNI. Enlace: https://sihce.minsa.gob.pe/',
+                'Creación de Usuario': 'Su cuenta fue creada, usuario y contraseña es su Nro. DNI.\n\nEnlace: https://fichasfamiliares.minsa.gob.pe/',
                 'Olvidé mi contraseña': 'Se reestableció su contraseña, para acceder use su Nro. DNI como contraseña'
             }
         };
@@ -1225,6 +1221,14 @@
                 return;
             }
 
+            // IMPORTANTE: Preparar WhatsApp ANTES del fetch para evitar bloqueo de pop-ups
+            const mensaje = encodeURIComponent(`Hola ${nombre}, respuesta a su ticket ${ticket}:\n\n${respuesta}\n\nÁrea de Soporte - Red de Salud Puerto Inca`);
+            const numeroLimpio = whatsapp.replace(/\D/g, '');
+            const urlWhatsApp = `https://wa.me/51${numeroLimpio}?text=${mensaje}`;
+            
+            // Detectar si es móvil
+            const esMobil = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
             document.getElementById('loading').classList.add('show');
             cerrarModal();
 
@@ -1251,28 +1255,41 @@
                 if (result.status === 'success') {
                     mostrarAlerta('✅ Respuesta enviada exitosamente. Correo enviado al usuario.', 'success');
                     
-                    // Abrir WhatsApp (compatible con móvil y PC)
-                    setTimeout(() => {
-                        const mensaje = encodeURIComponent(`Hola ${nombre}, respuesta a su ticket ${ticket}:\n\n${respuesta}\n\nÁrea de Soporte - Red de Salud Puerto Inca`);
-                        const numeroLimpio = whatsapp.replace(/\D/g, ''); // Eliminar caracteres no numéricos
-                        const urlWhatsApp = `https://wa.me/51${numeroLimpio}?text=${mensaje}`;
-                        
-                        // Detectar si es móvil
-                        const esMobil = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                        
+                    // Abrir WhatsApp INMEDIATAMENTE después de respuesta exitosa
+                    // Sin setTimeout para evitar bloqueo de navegadores
+                    try {
                         if (esMobil) {
-                            // En móvil: usar window.location para mejor compatibilidad
-                            window.location.href = urlWhatsApp;
+                            // En móvil: crear un link temporal y hacer click
+                            const link = document.createElement('a');
+                            link.href = urlWhatsApp;
+                            link.target = '_blank';
+                            link.style.display = 'none';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
                         } else {
-                            // En PC: abrir en nueva pestaña
-                            window.open(urlWhatsApp, '_blank');
+                            // En PC: abrir en nueva pestaña directamente
+                            const ventana = window.open(urlWhatsApp, '_blank');
+                            if (!ventana) {
+                                // Si fue bloqueado, mostrar mensaje
+                                console.warn('Pop-up bloqueado. Intenta permitir pop-ups para este sitio.');
+                                // Intentar con link como alternativa
+                                const link = document.createElement('a');
+                                link.href = urlWhatsApp;
+                                link.target = '_blank';
+                                link.click();
+                            }
                         }
-                    }, 2000);
+                    } catch (whatsappError) {
+                        console.error('Error al abrir WhatsApp:', whatsappError);
+                        // Mostrar el link como alternativa
+                        mostrarAlerta(`WhatsApp: ${urlWhatsApp}`, 'info');
+                    }
 
-                    // Recargar tickets
+                    // Recargar tickets después de un momento
                     setTimeout(() => {
                         cargarTickets();
-                    }, 3000);
+                    }, 2000);
                 } else {
                     mostrarAlerta('Error: ' + result.message, 'danger');
                 }
