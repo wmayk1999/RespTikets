@@ -755,6 +755,99 @@
         </div>
     </div>
 
+    <!-- Modal Ver Más Detalles -->
+    <div id="modalVerMas" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-info-circle"></i> Detalles Completos del Ticket</h2>
+                <button class="close-btn" onclick="cerrarModalVerMas()">&times;</button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <!-- Información del Ticket -->
+                <div class="info-box">
+                    <h3 style="color: var(--minsa-blue); margin-bottom: 15px; font-size: 16px;">
+                        <i class="fas fa-ticket-alt"></i> Información del Ticket
+                    </h3>
+                    <p><strong>N° Ticket:</strong> <span id="detTicket"></span></p>
+                    <p><strong>Fecha:</strong> <span id="detFecha"></span></p>
+                    <p><strong>Estado:</strong> <span id="detEstado"></span></p>
+                </div>
+
+                <!-- Información del Usuario -->
+                <div class="info-box">
+                    <h3 style="color: var(--minsa-blue); margin-bottom: 15px; font-size: 16px;">
+                        <i class="fas fa-user"></i> Datos del Usuario
+                    </h3>
+                    <p><strong>DNI:</strong> <span id="detDNI"></span></p>
+                    <p><strong>Nombre:</strong> <span id="detNombre"></span></p>
+                    <p><strong>Fecha Nacimiento:</strong> <span id="detFechaNac"></span></p>
+                </div>
+
+                <!-- Contacto -->
+                <div class="info-box">
+                    <h3 style="color: var(--minsa-blue); margin-bottom: 15px; font-size: 16px;">
+                        <i class="fas fa-phone"></i> Contacto
+                    </h3>
+                    <p><strong>Correo:</strong> <span id="detCorreo"></span></p>
+                    <p><strong>WhatsApp:</strong> <span id="detWhatsApp"></span></p>
+                </div>
+
+                <!-- Información Profesional -->
+                <div class="info-box">
+                    <h3 style="color: var(--minsa-blue); margin-bottom: 15px; font-size: 16px;">
+                        <i class="fas fa-briefcase"></i> Datos Profesionales
+                    </h3>
+                    <p><strong>Profesión:</strong> <span id="detProfesion"></span></p>
+                    <p><strong>N° Colegio:</strong> <span id="detNroColegio"></span></p>
+                </div>
+
+                <!-- Establecimiento -->
+                <div class="info-box">
+                    <h3 style="color: var(--minsa-blue); margin-bottom: 15px; font-size: 16px;">
+                        <i class="fas fa-hospital"></i> Establecimiento
+                    </h3>
+                    <p><strong>MicroRed:</strong> <span id="detMicrored"></span></p>
+                    <p><strong>Establecimiento:</strong> <span id="detEstablecimiento"></span></p>
+                </div>
+
+                <!-- Contrato -->
+                <div class="info-box">
+                    <h3 style="color: var(--minsa-blue); margin-bottom: 15px; font-size: 16px;">
+                        <i class="fas fa-file-contract"></i> Información Contractual
+                    </h3>
+                    <p><strong>Modalidad:</strong> <span id="detModalidad"></span></p>
+                    <p><strong>Fin de Contrato:</strong> <span id="detFinContrato"></span></p>
+                </div>
+            </div>
+
+            <!-- Información del Soporte -->
+            <div class="info-box" style="margin-top: 20px;">
+                <h3 style="color: var(--minsa-blue); margin-bottom: 15px; font-size: 16px;">
+                    <i class="fas fa-laptop-medical"></i> Información del Soporte
+                </h3>
+                <p><strong>Sistema:</strong> <span id="detSistema"></span></p>
+                <p><strong>Motivo:</strong> <span id="detMotivo"></span></p>
+                <p><strong>Descripción:</strong></p>
+                <p style="background: white; padding: 10px; border-radius: 5px; margin-top: 8px; white-space: pre-wrap;" id="detDescripcion"></p>
+            </div>
+
+            <!-- Respuesta (si existe) -->
+            <div id="respuestaBox" class="info-box" style="margin-top: 20px; display: none; border-left: 5px solid var(--success-color);">
+                <h3 style="color: var(--success-color); margin-bottom: 15px; font-size: 16px;">
+                    <i class="fas fa-check-circle"></i> Respuesta del Soporte
+                </h3>
+                <p style="background: white; padding: 10px; border-radius: 5px; white-space: pre-wrap;" id="detRespuesta"></p>
+            </div>
+
+            <div style="text-align: center; margin-top: 25px;">
+                <button class="btn btn-primary" onclick="cerrarModalVerMas()">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // URL del Google Apps Script
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyPAS1DyWfGd1z04RteM-EIu6OFYJZ8eTH_xcPM5SzkUT9WtGPL1Za4JOaTxzUTW5_6/exec';
@@ -807,6 +900,8 @@
             document.getElementById('filterFechaDesde').setAttribute('max', hoy);
             document.getElementById('filterFechaHasta').setAttribute('max', hoy);
             document.getElementById('filterFechaHasta').value = hoy;
+            // Establecer Fecha Desde en vacío para mostrar todos los tickets hasta hoy
+            document.getElementById('filterFechaDesde').value = '';
         }
 
         // Función para cargar tickets
@@ -846,7 +941,7 @@
 
         // Función para parsear fecha en formato peruano
         function parsearFecha(fechaStr) {
-            // Formato esperado: "24/11/2025, 9:35:48 p. m." o "24/11/2025, 8:15:30 p.m."
+            // Formato esperado: "24/11/2025, 9:35:48 p. m." o "24/11/2025, 8:15:30 a.m."
             try {
                 // Separar fecha y hora
                 const partes = fechaStr.split(',');
@@ -861,13 +956,16 @@
                 const año = parseInt(fecha[2]);
                 
                 // Parsear hora HH:MM:SS a.m./p.m.
-                const horaStr = partes[1].trim();
-                const espm = horaStr.toLowerCase().includes('p');
-                const esam = horaStr.toLowerCase().includes('a');
+                const horaStr = partes[1].trim().toLowerCase().replace(/\s+/g, ' '); // Normalizar espacios
+                const espm = horaStr.includes('p');
+                const esam = horaStr.includes('a');
                 
                 // Extraer números de hora
                 const horaMatch = horaStr.match(/(\d+):(\d+):(\d+)/);
-                if (!horaMatch) return new Date(año, mes, dia);
+                if (!horaMatch) {
+                    console.warn('No se pudo parsear hora:', fechaStr);
+                    return new Date(año, mes, dia);
+                }
                 
                 let hora = parseInt(horaMatch[1]);
                 const minuto = parseInt(horaMatch[2]);
@@ -880,7 +978,9 @@
                     hora = 0;
                 }
                 
-                return new Date(año, mes, dia, hora, minuto, segundo);
+                const fechaFinal = new Date(año, mes, dia, hora, minuto, segundo);
+                
+                return fechaFinal;
             } catch (e) {
                 console.error('Error parseando fecha:', fechaStr, e);
                 return new Date(fechaStr);
@@ -947,14 +1047,19 @@
                         </span>
                     </td>
                     <td>
-                        ${ticket.estado === 'Pendiente' ? 
-                            `<button class="btn btn-success" onclick='abrirModalResponder(${JSON.stringify(ticket).replace(/'/g, "&#39;")})' style="padding: 8px 15px; font-size: 13px;">
-                                <i class="fas fa-reply"></i> Responder
-                            </button>` :
-                            `<button class="btn" onclick='verRespuesta(${JSON.stringify(ticket.respuesta).replace(/'/g, "&#39;")})' style="padding: 8px 15px; font-size: 13px; background: #3498db; color: white;">
-                                <i class="fas fa-eye"></i> Ver
-                            </button>`
-                        }
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                            <button class="btn" onclick='verMasDetalles(${JSON.stringify(ticket).replace(/'/g, "&#39;")})' style="padding: 6px 12px; font-size: 12px; background: #3498db; color: white;">
+                                <i class="fas fa-info-circle"></i> Ver Más
+                            </button>
+                            ${ticket.estado === 'Pendiente' ? 
+                                `<button class="btn btn-success" onclick='abrirModalResponder(${JSON.stringify(ticket).replace(/'/g, "&#39;")})' style="padding: 6px 12px; font-size: 12px;">
+                                    <i class="fas fa-reply"></i> Responder
+                                </button>` :
+                                `<button class="btn" onclick='verRespuesta(${JSON.stringify(ticket.respuesta).replace(/'/g, "&#39;")})' style="padding: 6px 12px; font-size: 12px; background: #16a085; color: white;">
+                                    <i class="fas fa-eye"></i> Respuesta
+                                </button>`
+                            }
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -982,7 +1087,10 @@
 
             // Filtrar por rango de fechas
             if (filterFechaDesde) {
-                const fechaDesde = new Date(filterFechaDesde);
+                // Crear fecha local (no UTC)
+                const partes = filterFechaDesde.split('-');
+                const fechaDesde = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+                fechaDesde.setHours(0, 0, 0, 0); // Inicio del día
                 ticketsFiltrados = ticketsFiltrados.filter(t => {
                     const fechaTicket = parsearFecha(t.fecha);
                     return fechaTicket >= fechaDesde;
@@ -990,8 +1098,10 @@
             }
 
             if (filterFechaHasta) {
-                const fechaHasta = new Date(filterFechaHasta);
-                fechaHasta.setHours(23, 59, 59, 999); // Incluir todo el día
+                // Crear fecha local (no UTC)
+                const partes = filterFechaHasta.split('-');
+                const fechaHasta = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+                fechaHasta.setHours(23, 59, 59, 999); // Fin del día
                 ticketsFiltrados = ticketsFiltrados.filter(t => {
                     const fechaTicket = parsearFecha(t.fecha);
                     return fechaTicket <= fechaHasta;
@@ -1046,6 +1156,57 @@
         // Cerrar modal
         function cerrarModal() {
             document.getElementById('modalResponder').classList.remove('show');
+        }
+
+        // Abrir modal "Ver Más Detalles"
+        function verMasDetalles(ticket) {
+            // Llenar información del ticket
+            document.getElementById('detTicket').textContent = ticket.ticket || 'N/A';
+            document.getElementById('detFecha').textContent = ticket.fecha || 'N/A';
+            document.getElementById('detEstado').innerHTML = `<span class="badge badge-${ticket.estado === 'Pendiente' ? 'pending' : 'resolved'}">${ticket.estado}</span>`;
+            
+            // Llenar datos del usuario
+            document.getElementById('detDNI').textContent = ticket.dni || 'N/A';
+            document.getElementById('detNombre').textContent = ticket.nombre || 'N/A';
+            document.getElementById('detFechaNac').textContent = ticket.fechaNacimiento || 'N/A';
+            
+            // Llenar contacto
+            document.getElementById('detCorreo').textContent = ticket.correo || 'N/A';
+            document.getElementById('detWhatsApp').textContent = ticket.whatsapp || 'N/A';
+            
+            // Llenar información profesional
+            document.getElementById('detProfesion').textContent = ticket.profesion || 'N/A';
+            document.getElementById('detNroColegio').textContent = ticket.nroColegio || 'N/A';
+            
+            // Llenar establecimiento
+            document.getElementById('detMicrored').textContent = ticket.microred || 'N/A';
+            document.getElementById('detEstablecimiento').textContent = ticket.establecimiento || 'N/A';
+            
+            // Llenar contrato
+            document.getElementById('detModalidad').textContent = ticket.modalidad || 'N/A';
+            document.getElementById('detFinContrato').textContent = ticket.finContrato || 'N/A';
+            
+            // Llenar información del soporte
+            document.getElementById('detSistema').textContent = ticket.sistema || 'N/A';
+            document.getElementById('detMotivo').textContent = ticket.motivo || 'N/A';
+            document.getElementById('detDescripcion').textContent = ticket.descripcion || 'Sin descripción adicional';
+            
+            // Mostrar respuesta si existe
+            const respuestaBox = document.getElementById('respuestaBox');
+            if (ticket.estado === 'Atendido' && ticket.respuesta) {
+                document.getElementById('detRespuesta').textContent = ticket.respuesta;
+                respuestaBox.style.display = 'block';
+            } else {
+                respuestaBox.style.display = 'none';
+            }
+            
+            // Abrir modal
+            document.getElementById('modalVerMas').classList.add('show');
+        }
+
+        // Cerrar modal "Ver Más"
+        function cerrarModalVerMas() {
+            document.getElementById('modalVerMas').classList.remove('show');
         }
 
         // Enviar respuesta
@@ -1143,6 +1304,12 @@
         document.getElementById('modalResponder').addEventListener('click', function(e) {
             if (e.target === this) {
                 cerrarModal();
+            }
+        });
+
+        document.getElementById('modalVerMas').addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarModalVerMas();
             }
         });
     </script>
