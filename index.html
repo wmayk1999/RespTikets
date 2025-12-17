@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Responder Tickets - Soporte RSPI</title>
+    <title>Dashboard Soporte Técnico - RSPI</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
     <style>
         :root {
-            /* Colores MINSA Profesionales */
             --minsa-red: #C8102E;
             --minsa-dark: #1a1a2e;
             --minsa-blue: #16537e;
@@ -39,91 +39,277 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
         }
 
-        .header {
+        /* Tabs de navegación */
+        .tabs-container {
             background: white;
-            padding: 25px;
             border-radius: 12px 12px 0 0;
+            padding: 0;
             box-shadow: var(--shadow);
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
             text-align: center;
-            border-bottom: 4px solid var(--minsa-red);
-        }
-
-        .header h1 {
-            color: var(--minsa-dark);
-            margin-bottom: 8px;
-            font-size: 28px;
-        }
-
-        .header p {
+            background: var(--minsa-light);
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
             color: var(--minsa-gray);
-            font-size: 15px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
-        .content {
+        .tab:first-child {
+            border-radius: 12px 0 0 0;
+        }
+
+        .tab:last-child {
+            border-radius: 0 12px 0 0;
+        }
+
+        .tab:hover {
+            background: #dfe6e9;
+        }
+
+        .tab.active {
             background: white;
-            padding: 25px;
+            color: var(--minsa-blue);
+            border-bottom: 3px solid var(--minsa-red);
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 30px;
             border-radius: 0 0 12px 12px;
             box-shadow: var(--shadow);
         }
 
-        .stats {
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--minsa-dark) 0%, var(--minsa-blue) 100%);
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            color: white;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        /* Dashboard Cards */
+        .dashboard {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
 
-        .stat-card {
-            background: linear-gradient(135deg, var(--minsa-blue) 0%, var(--minsa-dark) 100%);
-            color: white;
-            padding: 25px;
+        .dashboard-card {
+            background: white;
             border-radius: 12px;
-            text-align: center;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s;
+            padding: 25px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            border-left: 5px solid var(--minsa-blue);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
         }
 
-        .stat-card:hover {
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 100%);
+            border-radius: 0 12px 0 100%;
+        }
+
+        .dashboard-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
         }
 
-        .stat-card.success {
-            background: linear-gradient(135deg, var(--success-color) 0%, #229954 100%);
+        .dashboard-card.total {
+            border-left-color: var(--info-color);
         }
 
-        .stat-card.warning {
-            background: linear-gradient(135deg, var(--warning-color) 0%, #d68910 100%);
+        .dashboard-card.atendido {
+            border-left-color: var(--success-color);
         }
 
-        .stat-card.info {
-            background: linear-gradient(135deg, var(--info-color) 0%, #2874a6 100%);
+        .dashboard-card.pendiente {
+            border-left-color: var(--warning-color);
         }
 
-        .stat-card h3 {
-            font-size: 42px;
-            margin-bottom: 8px;
+        .dashboard-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-card-info {
+            flex: 1;
+        }
+
+        .dashboard-card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .dashboard-card.total .dashboard-card-icon {
+            background: linear-gradient(135deg, var(--info-color), #2874a6);
+        }
+
+        .dashboard-card.atendido .dashboard-card-icon {
+            background: linear-gradient(135deg, var(--success-color), #229954);
+        }
+
+        .dashboard-card.pendiente .dashboard-card-icon {
+            background: linear-gradient(135deg, var(--warning-color), #d68910);
+        }
+
+        .dashboard-card-title {
+            font-size: 13px;
+            color: var(--minsa-gray);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .dashboard-card-subtitle {
+            font-size: 12px;
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dashboard-card-value {
+            font-size: 48px;
             font-weight: 700;
+            color: var(--minsa-dark);
+            line-height: 1;
+            margin-bottom: 10px;
         }
 
-        .stat-card p {
-            font-size: 14px;
-            opacity: 0.95;
-            font-weight: 500;
+        .dashboard-card-percentage {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
         }
 
+        .percentage-success {
+            background: #d5f4e6;
+            color: var(--success-color);
+        }
+
+        .percentage-warning {
+            background: #fef5e7;
+            color: var(--warning-color);
+        }
+
+        .percentage-info {
+            background: #e3f2fd;
+            color: var(--info-color);
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--minsa-light);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--minsa-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-title i {
+            color: var(--minsa-blue);
+        }
+
+        .chart-canvas {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Filtros */
         .filters {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 25px;
-            padding: 20px;
-            background: var(--minsa-light);
-            border-radius: 10px;
-            border: 2px solid var(--border-color);
+            padding: 25px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .filter-group {
@@ -172,6 +358,13 @@
             padding-right: 35px;
         }
 
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
         .btn {
             padding: 12px 25px;
             border: none;
@@ -205,10 +398,6 @@
             color: white;
         }
 
-        .btn-success:hover {
-            background: #229954;
-        }
-
         .btn-danger {
             background: var(--danger-color);
             color: white;
@@ -219,81 +408,74 @@
             color: white;
         }
 
-        .btn-clear:hover {
-            background: var(--minsa-dark);
-        }
-
-        .filter-actions {
-            display: flex;
-            gap: 10px;
-            grid-column: 1 / -1;
-            margin-top: 10px;
-        }
-
+        /* Tabla de tickets */
         .tickets-table {
-            width: 100%;
-            overflow-x: auto;
-            border-radius: 10px;
-            border: 2px solid var(--border-color);
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
         }
 
-        th {
-            background: var(--minsa-blue);
+        thead {
+            background: linear-gradient(135deg, var(--minsa-dark) 0%, var(--minsa-blue) 100%);
             color: white;
-            padding: 15px 12px;
+        }
+
+        thead th {
+            padding: 18px 15px;
             text-align: left;
             font-weight: 600;
             font-size: 13px;
-            position: sticky;
-            top: 0;
-            z-index: 10;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        td {
-            padding: 15px 12px;
-            border-bottom: 1px solid var(--minsa-light);
+        tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.3s;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        tbody td {
+            padding: 18px 15px;
             font-size: 14px;
             color: var(--minsa-dark);
         }
 
-        tr:hover {
-            background: #f8f9fa;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
         .badge {
-            padding: 6px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
-            display: inline-block;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .badge-pending {
-            background: #fff3cd;
-            color: #856404;
-            border: 2px solid #ffc107;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
 
         .badge-resolved {
-            background: #d4edda;
-            color: #155724;
-            border: 2px solid #28a745;
+            background: #d5f4e6;
+            color: var(--success-color);
         }
 
+        .badge-pending {
+            background: #fef5e7;
+            color: var(--warning-color);
+        }
+
+        .btn-sm {
+            padding: 8px 15px;
+            font-size: 12px;
+        }
+
+        /* Modales */
         .modal {
             display: none;
             position: fixed;
@@ -301,30 +483,28 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.7);
             z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(5px);
+            overflow-y: auto;
+            padding: 20px;
         }
 
         .modal.show {
             display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .modal-content {
             background: white;
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 650px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
+            border-radius: 12px;
+            max-width: 900px;
+            width: 100%;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            animation: slideIn 0.3s ease-out;
+            animation: modalSlide 0.3s;
         }
 
-        @keyframes slideIn {
+        @keyframes modalSlide {
             from {
                 transform: translateY(-50px);
                 opacity: 0;
@@ -336,42 +516,82 @@
         }
 
         .modal-header {
+            background: linear-gradient(135deg, var(--minsa-dark) 0%, var(--minsa-blue) 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px 12px 0 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 3px solid var(--minsa-red);
         }
 
         .modal-header h2 {
-            color: var(--minsa-dark);
-            font-size: 24px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .close-btn {
-            background: none;
+            background: rgba(255,255,255,0.1);
             border: none;
+            color: white;
             font-size: 28px;
             cursor: pointer;
-            color: var(--minsa-gray);
-            transition: all 0.3s;
             width: 40px;
             height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
+            transition: background 0.3s;
         }
 
         .close-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .modal-body {
+            padding: 30px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .ticket-info {
             background: var(--minsa-light);
-            color: var(--danger-color);
-            transform: rotate(90deg);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .ticket-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: var(--minsa-gray);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 15px;
+            color: var(--minsa-dark);
+            font-weight: 500;
         }
 
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .form-group label {
@@ -382,51 +602,103 @@
             font-size: 14px;
         }
 
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
+        .form-group textarea {
             width: 100%;
-            padding: 12px 15px;
+            padding: 15px;
             border: 2px solid var(--border-color);
             border-radius: 8px;
-            font-family: 'Roboto', sans-serif;
             font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--minsa-blue);
-            box-shadow: 0 0 0 3px rgba(22, 83, 126, 0.1);
-        }
-
-        .form-group textarea {
-            min-height: 130px;
+            font-family: 'Roboto', sans-serif;
+            min-height: 200px;
             resize: vertical;
         }
 
-        .info-box {
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--minsa-blue);
+        }
+
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 2px solid var(--minsa-light);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Detalles del ticket */
+        .detalles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .detalles-section {
             background: var(--minsa-light);
             padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            border-left: 5px solid var(--minsa-blue);
+            border-radius: 12px;
         }
 
-        .info-box p {
-            margin: 8px 0;
-            font-size: 14px;
+        .detalles-section h3 {
             color: var(--minsa-dark);
+            font-size: 16px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid var(--minsa-blue);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .info-box strong {
-            color: var(--minsa-blue);
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
             font-weight: 600;
+            color: var(--minsa-gray);
+            font-size: 13px;
         }
 
-        .loading {
+        .detail-value {
+            color: var(--minsa-dark);
+            font-size: 13px;
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .respuesta-box {
+            background: #e8f5e9;
+            border-left: 5px solid var(--success-color);
+            padding: 25px;
+            border-radius: 12px;
+            margin-top: 25px;
+        }
+
+        .respuesta-box h4 {
+            color: var(--success-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+        }
+
+        .respuesta-text {
+            color: var(--minsa-dark);
+            line-height: 1.8;
+            font-size: 14px;
+        }
+
+        /* Loading */
+        .loading-overlay {
             display: none;
             position: fixed;
             top: 0;
@@ -435,56 +707,40 @@
             height: 100%;
             background: rgba(0,0,0,0.8);
             z-index: 9999;
-            align-items: center;
             justify-content: center;
+            align-items: center;
         }
 
-        .loading.show {
+        .loading-overlay.show {
             display: flex;
         }
 
-        .loading-content {
-            background: white;
-            padding: 40px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        }
-
         .spinner {
-            border: 5px solid var(--minsa-light);
-            border-top: 5px solid var(--minsa-blue);
+            width: 70px;
+            height: 70px;
+            border: 7px solid rgba(255,255,255,0.3);
+            border-top-color: white;
             border-radius: 50%;
-            width: 60px;
-            height: 60px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            to { transform: rotate(360deg); }
         }
 
+        /* Alert */
         .alert {
-            padding: 18px 25px;
-            border-radius: 10px;
-            margin-bottom: 25px;
             display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 18px 25px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            z-index: 10000;
+            max-width: 450px;
+            animation: slideIn 0.3s;
             font-weight: 500;
-            box-shadow: var(--shadow);
-            animation: slideDown 0.3s ease-out;
-        }
-
-        @keyframes slideDown {
-            from {
-                transform: translateY(-20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
         }
 
         .alert.show {
@@ -494,15 +750,29 @@
         }
 
         .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 2px solid #28a745;
+            background: var(--success-color);
+            color: white;
         }
 
         .alert-danger {
-            background: #f8d7da;
-            color: #721c24;
-            border: 2px solid #dc3545;
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .alert-info {
+            background: var(--info-color);
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
         .empty-state {
@@ -513,197 +783,274 @@
 
         .empty-state i {
             font-size: 64px;
-            color: var(--border-color);
             margin-bottom: 20px;
+            opacity: 0.4;
         }
 
         .empty-state p {
             font-size: 16px;
-            margin-top: 15px;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
             .header h1 {
-                font-size: 22px;
+                font-size: 24px;
             }
 
-            .stats {
+            .dashboard {
                 grid-template-columns: 1fr;
             }
 
-            .stat-card h3 {
-                font-size: 36px;
+            .charts-grid {
+                grid-template-columns: 1fr;
             }
 
             .filters {
                 grid-template-columns: 1fr;
-                padding: 15px;
             }
 
-            .filter-actions {
+            .tabs {
                 flex-direction: column;
             }
 
-            .btn {
-                width: 100%;
-                justify-content: center;
+            .tab {
+                border-radius: 0 !important;
             }
 
             table {
                 font-size: 12px;
             }
 
-            th, td {
-                padding: 10px 8px;
-            }
-
-            .modal-content {
-                padding: 20px;
-                width: 95%;
-            }
-
-            .modal-header h2 {
-                font-size: 20px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header {
-                padding: 20px 15px;
-            }
-
-            .content {
-                padding: 15px;
-            }
-
-            .stat-card {
-                padding: 20px;
-            }
-
-            .stat-card h3 {
-                font-size: 32px;
-            }
-
-            th, td {
-                padding: 8px 5px;
-                font-size: 11px;
-            }
-
-            .badge {
-                padding: 4px 8px;
-                font-size: 10px;
+            thead th,
+            tbody td {
+                padding: 12px 10px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Loading -->
-    <div id="loading" class="loading">
-        <div class="loading-content">
-            <div class="spinner"></div>
-            <p><strong>Cargando datos...</strong></p>
-        </div>
-    </div>
-
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1><i class="fas fa-headset"></i> Sistema de Respuesta de Tickets</h1>
+            <h1><i class="fas fa-chart-line"></i> Dashboard de Soporte Técnico HIS-MINSA</h1>
             <p>Red de Salud Puerto Inca - Área de Estadística e Informática</p>
         </div>
 
-        <!-- Content -->
-        <div class="content">
-            <!-- Alert -->
-            <div id="alert" class="alert"></div>
-
-            <!-- Stats -->
-            <div class="stats">
-                <div class="stat-card info">
-                    <h3 id="totalTickets">0</h3>
-                    <p><i class="fas fa-ticket-alt"></i> Total Tickets</p>
-                </div>
-                <div class="stat-card warning">
-                    <h3 id="pendingTickets">0</h3>
-                    <p><i class="fas fa-clock"></i> Pendientes</p>
-                </div>
-                <div class="stat-card success">
-                    <h3 id="resolvedTickets">0</h3>
-                    <p><i class="fas fa-check-circle"></i> Atendidos</p>
-                </div>
+        <!-- Tabs Navigation -->
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab active" onclick="cambiarTab('dashboard')">
+                    <i class="fas fa-chart-pie"></i> Dashboard
+                </button>
+                <button class="tab" onclick="cambiarTab('tickets')">
+                    <i class="fas fa-ticket-alt"></i> Gestión de Tickets
+                </button>
             </div>
 
-            <!-- Filters -->
-            <div class="filters">
-                <div class="filter-group">
-                    <label><i class="fas fa-list"></i> Estado</label>
-                    <select id="filterEstado" onchange="filtrarTickets()">
-                        <option value="todos">Todos los estados</option>
-                        <option value="Pendiente" selected>Pendientes</option>
-                        <option value="Atendido">Atendidos</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label><i class="fas fa-laptop-medical"></i> Sistema</label>
-                    <select id="filterSistema" onchange="filtrarTickets()">
-                        <option value="todos">Todos los sistemas</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label><i class="fas fa-calendar-day"></i> Fecha Desde</label>
-                    <input type="date" id="filterFechaDesde" onchange="filtrarTickets()">
-                </div>
-
-                <div class="filter-group">
-                    <label><i class="fas fa-calendar-check"></i> Fecha Hasta</label>
-                    <input type="date" id="filterFechaHasta" onchange="filtrarTickets()">
-                </div>
-
-                <div class="filter-group">
-                    <label><i class="fas fa-search"></i> Buscar</label>
-                    <input type="text" id="searchTicket" placeholder="Ticket, nombre o DNI..." onkeyup="filtrarTickets()">
-                </div>
-
-                <div class="filter-actions">
-                    <button class="btn btn-primary" onclick="cargarTickets()">
-                        <i class="fas fa-sync"></i> Actualizar
-                    </button>
-                    <button class="btn btn-clear" onclick="limpiarFiltros()">
-                        <i class="fas fa-eraser"></i> Limpiar Filtros
-                    </button>
-                </div>
-            </div>
-
-            <!-- Tickets Table -->
-            <div class="tickets-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th><i class="fas fa-hashtag"></i> Ticket</th>
-                            <th><i class="fas fa-calendar"></i> Fecha</th>
-                            <th><i class="fas fa-laptop-medical"></i> Sistema</th>
-                            <th><i class="fas fa-user"></i> Nombre</th>
-                            <th><i class="fas fa-question-circle"></i> Motivo</th>
-                            <th><i class="fas fa-info-circle"></i> Estado</th>
-                            <th><i class="fas fa-cogs"></i> Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ticketsBody">
-                        <tr>
-                            <td colspan="7" class="empty-state">
+            <!-- Tab: Dashboard -->
+            <div id="tab-dashboard" class="tab-content active">
+                <!-- Dashboard Cards -->
+                <div class="dashboard">
+                    <div class="dashboard-card total">
+                        <div class="dashboard-card-header">
+                            <div class="dashboard-card-info">
+                                <div class="dashboard-card-title">Total Tickets</div>
+                                <div class="dashboard-card-subtitle">
+                                    <i class="fas fa-ticket-alt"></i>
+                                    <span id="subtitleTotal">Todos los registros</span>
+                                </div>
+                            </div>
+                            <div class="dashboard-card-icon">
                                 <i class="fas fa-inbox"></i>
-                                <p>Cargando tickets...</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                            </div>
+                        </div>
+                        <div class="dashboard-card-value" id="totalTickets">0</div>
+                        <div class="dashboard-card-percentage percentage-info" id="percentTotal">100% del total</div>
+                    </div>
+
+                    <div class="dashboard-card atendido">
+                        <div class="dashboard-card-header">
+                            <div class="dashboard-card-info">
+                                <div class="dashboard-card-title">Tickets Atendidos</div>
+                                <div class="dashboard-card-subtitle">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span id="subtitleAtendido">Casos resueltos</span>
+                                </div>
+                            </div>
+                            <div class="dashboard-card-icon">
+                                <i class="fas fa-check-double"></i>
+                            </div>
+                        </div>
+                        <div class="dashboard-card-value" id="resolvedTickets">0</div>
+                        <div class="dashboard-card-percentage percentage-success" id="percentAtendido">0%</div>
+                    </div>
+
+                    <div class="dashboard-card pendiente">
+                        <div class="dashboard-card-header">
+                            <div class="dashboard-card-info">
+                                <div class="dashboard-card-title">Tickets Pendientes</div>
+                                <div class="dashboard-card-subtitle">
+                                    <i class="fas fa-clock"></i>
+                                    <span id="subtitlePendiente">Requieren atención</span>
+                                </div>
+                            </div>
+                            <div class="dashboard-card-icon">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                        </div>
+                        <div class="dashboard-card-value" id="pendingTickets">0</div>
+                        <div class="dashboard-card-percentage percentage-warning" id="percentPendiente">0%</div>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="charts-grid">
+                    <!-- Gráfico: Tickets por Mes -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i class="fas fa-calendar-alt"></i>
+                                Tickets por Mes
+                            </div>
+                        </div>
+                        <div class="chart-canvas">
+                            <canvas id="chartMeses"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico: Tickets por Sistema -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i class="fas fa-laptop-medical"></i>
+                                Tickets por Sistema
+                            </div>
+                        </div>
+                        <div class="chart-canvas">
+                            <canvas id="chartSistemas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico: Tickets por Profesión -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i class="fas fa-user-md"></i>
+                                Top 10 Profesiones
+                            </div>
+                        </div>
+                        <div class="chart-canvas">
+                            <canvas id="chartProfesiones"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico: Tickets por Microred -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i class="fas fa-network-wired"></i>
+                                Tickets por Microred
+                            </div>
+                        </div>
+                        <div class="chart-canvas">
+                            <canvas id="chartMicrored"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico: Top Establecimientos -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i class="fas fa-hospital"></i>
+                                Top 10 Establecimientos
+                            </div>
+                        </div>
+                        <div class="chart-canvas">
+                            <canvas id="chartEstablecimientos"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico: Tickets por Motivo -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i class="fas fa-exclamation-circle"></i>
+                                Motivos de Soporte
+                            </div>
+                        </div>
+                        <div class="chart-canvas">
+                            <canvas id="chartMotivos"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Tickets -->
+            <div id="tab-tickets" class="tab-content">
+                <!-- Alert -->
+                <div id="alert" class="alert"></div>
+
+                <!-- Filtros -->
+                <div class="filters">
+                    <div class="filter-group">
+                        <label><i class="fas fa-list"></i> Estado</label>
+                        <select id="filterEstado" onchange="filtrarTickets()">
+                            <option value="todos">Todos los estados</option>
+                            <option value="Pendiente" selected>Pendientes</option>
+                            <option value="Atendido">Atendidos</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label><i class="fas fa-laptop-medical"></i> Sistema</label>
+                        <select id="filterSistema" onchange="filtrarTickets()">
+                            <option value="todos">Todos los sistemas</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label><i class="fas fa-calendar-day"></i> Fecha Desde</label>
+                        <input type="date" id="filterFechaDesde" onchange="filtrarTickets()">
+                    </div>
+
+                    <div class="filter-group">
+                        <label><i class="fas fa-calendar-check"></i> Fecha Hasta</label>
+                        <input type="date" id="filterFechaHasta" onchange="filtrarTickets()">
+                    </div>
+
+                    <div class="filter-group">
+                        <label><i class="fas fa-search"></i> Buscar</label>
+                        <input type="text" id="searchTicket" placeholder="Ticket, nombre o DNI..." onkeyup="filtrarTickets()">
+                    </div>
+
+                    <div class="filter-actions">
+                        <button class="btn btn-primary" onclick="cargarTickets()">
+                            <i class="fas fa-sync"></i> Actualizar
+                        </button>
+                        <button class="btn btn-clear" onclick="limpiarFiltros()">
+                            <i class="fas fa-eraser"></i> Limpiar Filtros
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tickets Table -->
+                <div class="tickets-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-hashtag"></i> Ticket</th>
+                                <th><i class="fas fa-calendar"></i> Fecha</th>
+                                <th><i class="fas fa-laptop"></i> Sistema</th>
+                                <th><i class="fas fa-user"></i> Nombre</th>
+                                <th><i class="fas fa-exclamation-circle"></i> Motivo</th>
+                                <th><i class="fas fa-info-circle"></i> Estado</th>
+                                <th><i class="fas fa-cog"></i> Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticketsBody">
+                            <!-- Se llenará dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -715,137 +1062,189 @@
                 <h2><i class="fas fa-reply"></i> Responder Ticket</h2>
                 <button class="close-btn" onclick="cerrarModal()">&times;</button>
             </div>
+            <form onsubmit="enviarRespuesta(event)">
+                <div class="modal-body">
+                    <div class="ticket-info">
+                        <div class="ticket-info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Ticket</span>
+                                <span class="info-value" id="infoTicket"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Nombre</span>
+                                <span class="info-value" id="infoNombre"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Sistema</span>
+                                <span class="info-value" id="infoSistema"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Motivo</span>
+                                <span class="info-value" id="infoMotivo"></span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <span class="info-label">Descripción del Problema</span>
+                            <p class="info-value" style="margin-top: 10px; line-height: 1.6;" id="infoDescripcion"></p>
+                        </div>
+                    </div>
 
-            <div class="info-box">
-                <p><strong>Ticket:</strong> <span id="infoTicket"></span></p>
-                <p><strong>Usuario:</strong> <span id="infoNombre"></span></p>
-                <p><strong>Sistema:</strong> <span id="infoSistema"></span></p>
-                <p><strong>Motivo:</strong> <span id="infoMotivo"></span></p>
-                <p><strong>Descripción:</strong> <span id="infoDescripcion"></span></p>
-            </div>
+                    <input type="hidden" id="ticketRow">
+                    <input type="hidden" id="ticketNumero">
+                    <input type="hidden" id="ticketCorreo">
+                    <input type="hidden" id="ticketWhatsApp">
+                    <input type="hidden" id="ticketNombre">
+                    <input type="hidden" id="ticketSistema">
+                    <input type="hidden" id="ticketMotivo">
 
-            <form id="formRespuesta" onsubmit="enviarRespuesta(event)">
-                <input type="hidden" id="ticketRow">
-                <input type="hidden" id="ticketNumero">
-                <input type="hidden" id="ticketCorreo">
-                <input type="hidden" id="ticketWhatsApp">
-                <input type="hidden" id="ticketNombre">
-                <input type="hidden" id="ticketSistema">
-                <input type="hidden" id="ticketMotivo">
-
-                <div class="form-group">
-                    <label for="respuestaTexto">
-                        <i class="fas fa-comment-dots"></i> Tu Respuesta <span style="color: #e74c3c;">*</span>
-                    </label>
-                    <textarea id="respuestaTexto" required placeholder="Escribe tu respuesta al usuario..."></textarea>
-                    <p style="margin-top: 8px; font-size: 12px; color: #7f8c8d;">
-                        <i class="fas fa-lightbulb" style="color: #f39c12;"></i> <strong>Tip:</strong> La respuesta se rellena automáticamente según el Sistema y Motivo. Puedes editarla si deseas.
-                    </p>
+                    <div class="form-group">
+                        <label for="respuestaTexto"><i class="fas fa-comment-dots"></i> Respuesta al Usuario *</label>
+                        <textarea id="respuestaTexto" required placeholder="Escribe aquí la respuesta al usuario..."></textarea>
+                    </div>
                 </div>
 
-                <div style="display: flex; gap: 15px;">
-                    <button type="submit" class="btn btn-success" style="flex: 1;">
-                        <i class="fas fa-paper-plane"></i> Enviar Respuesta
-                    </button>
-                    <button type="button" class="btn btn-danger" onclick="cerrarModal()">
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-clear" onclick="cerrarModal()">
                         <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-paper-plane"></i> Enviar Respuesta
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal Ver Más Detalles -->
+    <!-- Modal Ver Más -->
     <div id="modalVerMas" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2><i class="fas fa-info-circle"></i> Detalles Completos del Ticket</h2>
+                <h2><i class="fas fa-info-circle"></i> Detalles del Ticket</h2>
                 <button class="close-btn" onclick="cerrarModalVerMas()">&times;</button>
             </div>
+            <div class="modal-body">
+                <div class="detalles-grid">
+                    <!-- Información del Ticket -->
+                    <div class="detalles-section">
+                        <h3><i class="fas fa-ticket-alt"></i> Información del Ticket</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Ticket:</span>
+                            <span class="detail-value" id="detTicket"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Fecha:</span>
+                            <span class="detail-value" id="detFecha"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Estado:</span>
+                            <span class="detail-value" id="detEstado"></span>
+                        </div>
+                    </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                <!-- Información del Ticket -->
-                <div class="info-box">
-                    <h3 style="color: var(--minsa-blue); margin-bottom: 15px; font-size: 16px;">
-                        <i class="fas fa-ticket-alt"></i> Información del Ticket
-                    </h3>
-                    <p><strong>N° Ticket:</strong> <span id="detTicket"></span></p>
-                    <p><strong>Fecha:</strong> <span id="detFecha"></span></p>
-                    <p><strong>Estado:</strong> <span id="detEstado"></span></p>
+                    <!-- Datos Personales -->
+                    <div class="detalles-section">
+                        <h3><i class="fas fa-user"></i> Datos Personales</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">DNI:</span>
+                            <span class="detail-value" id="detDNI"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Nombre:</span>
+                            <span class="detail-value" id="detNombre"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">F. Nacimiento:</span>
+                            <span class="detail-value" id="detFechaNac"></span>
+                        </div>
+                    </div>
+
+                    <!-- Contacto -->
+                    <div class="detalles-section">
+                        <h3><i class="fas fa-phone"></i> Contacto</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Correo:</span>
+                            <span class="detail-value" id="detCorreo"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">WhatsApp:</span>
+                            <span class="detail-value" id="detWhatsApp"></span>
+                        </div>
+                    </div>
+
+                    <!-- Información Profesional -->
+                    <div class="detalles-section">
+                        <h3><i class="fas fa-briefcase"></i> Información Profesional</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Profesión:</span>
+                            <span class="detail-value" id="detProfesion"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Nro. Colegio:</span>
+                            <span class="detail-value" id="detNroColegio"></span>
+                        </div>
+                    </div>
+
+                    <!-- Establecimiento -->
+                    <div class="detalles-section">
+                        <h3><i class="fas fa-hospital"></i> Establecimiento</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Microred:</span>
+                            <span class="detail-value" id="detMicrored"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Establecimiento:</span>
+                            <span class="detail-value" id="detEstablecimiento"></span>
+                        </div>
+                    </div>
+
+                    <!-- Contrato -->
+                    <div class="detalles-section">
+                        <h3><i class="fas fa-file-contract"></i> Contrato</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Modalidad:</span>
+                            <span class="detail-value" id="detModalidad"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Fin Contrato:</span>
+                            <span class="detail-value" id="detFinContrato"></span>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Información del Usuario -->
-                <div class="info-box">
-                    <h3 style="color: var(--minsa-blue); margin-bottom: 15px; font-size: 16px;">
-                        <i class="fas fa-user"></i> Datos del Usuario
-                    </h3>
-                    <p><strong>DNI:</strong> <span id="detDNI"></span></p>
-                    <p><strong>Nombre:</strong> <span id="detNombre"></span></p>
-                    <p><strong>Fecha Nacimiento:</strong> <span id="detFechaNac"></span></p>
+                <!-- Información del Soporte -->
+                <div class="detalles-section" style="margin-top: 25px;">
+                    <h3><i class="fas fa-headset"></i> Información del Soporte</h3>
+                    <div class="detail-row">
+                        <span class="detail-label">Sistema:</span>
+                        <span class="detail-value" id="detSistema"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Motivo:</span>
+                        <span class="detail-value" id="detMotivo"></span>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <span class="detail-label">Descripción del Problema:</span>
+                        <p style="margin-top: 12px; line-height: 1.8; color: var(--minsa-dark);" id="detDescripcion"></p>
+                    </div>
                 </div>
 
-                <!-- Contacto -->
-                <div class="info-box">
-                    <h3 style="color: var(--minsa-blue); margin-bottom: 15px; font-size: 16px;">
-                        <i class="fas fa-phone"></i> Contacto
-                    </h3>
-                    <p><strong>Correo:</strong> <span id="detCorreo"></span></p>
-                    <p><strong>WhatsApp:</strong> <span id="detWhatsApp"></span></p>
-                </div>
-
-                <!-- Información Profesional -->
-                <div class="info-box">
-                    <h3 style="color: var(--minsa-blue); margin-bottom: 15px; font-size: 16px;">
-                        <i class="fas fa-briefcase"></i> Datos Profesionales
-                    </h3>
-                    <p><strong>Profesión:</strong> <span id="detProfesion"></span></p>
-                    <p><strong>N° Colegio:</strong> <span id="detNroColegio"></span></p>
-                </div>
-
-                <!-- Establecimiento -->
-                <div class="info-box">
-                    <h3 style="color: var(--minsa-blue); margin-bottom: 15px; font-size: 16px;">
-                        <i class="fas fa-hospital"></i> Establecimiento
-                    </h3>
-                    <p><strong>MicroRed:</strong> <span id="detMicrored"></span></p>
-                    <p><strong>Establecimiento:</strong> <span id="detEstablecimiento"></span></p>
-                </div>
-
-                <!-- Contrato -->
-                <div class="info-box">
-                    <h3 style="color: var(--minsa-blue); margin-bottom: 15px; font-size: 16px;">
-                        <i class="fas fa-file-contract"></i> Información Contractual
-                    </h3>
-                    <p><strong>Modalidad:</strong> <span id="detModalidad"></span></p>
-                    <p><strong>Fin de Contrato:</strong> <span id="detFinContrato"></span></p>
+                <!-- Respuesta (si existe) -->
+                <div id="respuestaBox" class="respuesta-box" style="display: none;">
+                    <h4><i class="fas fa-check-circle"></i> Respuesta Enviada</h4>
+                    <p class="respuesta-text" id="detRespuesta"></p>
                 </div>
             </div>
-
-            <!-- Información del Soporte -->
-            <div class="info-box" style="margin-top: 20px;">
-                <h3 style="color: var(--minsa-blue); margin-bottom: 15px; font-size: 16px;">
-                    <i class="fas fa-laptop-medical"></i> Información del Soporte
-                </h3>
-                <p><strong>Sistema:</strong> <span id="detSistema"></span></p>
-                <p><strong>Motivo:</strong> <span id="detMotivo"></span></p>
-                <p><strong>Descripción:</strong></p>
-                <p style="background: white; padding: 10px; border-radius: 5px; margin-top: 8px; white-space: pre-wrap;" id="detDescripcion"></p>
-            </div>
-
-            <!-- Respuesta (si existe) -->
-            <div id="respuestaBox" class="info-box" style="margin-top: 20px; display: none; border-left: 5px solid var(--success-color);">
-                <h3 style="color: var(--success-color); margin-bottom: 15px; font-size: 16px;">
-                    <i class="fas fa-check-circle"></i> Respuesta del Soporte
-                </h3>
-                <p style="background: white; padding: 10px; border-radius: 5px; white-space: pre-wrap;" id="detRespuesta"></p>
-            </div>
-
-            <div style="text-align: center; margin-top: 25px;">
-                <button class="btn btn-primary" onclick="cerrarModalVerMas()">
+            <div class="modal-footer">
+                <button class="btn btn-clear" onclick="cerrarModalVerMas()">
                     <i class="fas fa-times"></i> Cerrar
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
     </div>
 
     <script>
@@ -853,54 +1252,48 @@
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyPAS1DyWfGd1z04RteM-EIu6OFYJZ8eTH_xcPM5SzkUT9WtGPL1Za4JOaTxzUTW5_6/exec';
 
         let todosLosTickets = [];
-
-        // Respuestas predeterminadas según Sistema y Motivo
-        const respuestasPredeterminadas = {
-            'HIS MINSA': {
-                'Contraseña Invalida-Reestablecer': 'Se reestableció su contraseña, revise en su correo el mensaje enviado y cambie su contraseña temporal.\n\nRecomendaciones:\n- Su nueva contraseña debe contener como mínimo 10 caracteres\n- Incluir una letra mayúscula, una letra minúscula, un número y un carácter especial\n- Tienes hasta hoy 8 P.M para cambiar tu contraseña temporal',
-                'Usuario Invalido-Habilitar': 'Su cuenta fue activada, Ingrese al sistema máximo hoy a las 8pm\n\nRecomendaciones:\n- Si continúa con problemas de acceso, comuníquese con el área de sistemas\n- Verifique que su navegador esté actualizado',
-                'Creación de Usuario': 'Se aperturó su cuenta, revise en su correo el mensaje enviado y cambie su contraseña temporal. \n\nEnlace: https://his.minsa.gob.pe/\n\nRecomendaciones:\n- Su nueva contraseña debe contener como mínimo 10 caracteres\n- Incluir una letra mayúscula, una letra minúscula, un número y un carácter especial\n- Tienes hasta hoy 8 P.M para cambiar tu contraseña temporal\n- Tu estadistico de Microred debe asignarte tu EEESS'
-            },
-            'SIHCE': {
-                'Contraseña Invalida-Reestablecer': 'Se reestableció su contraseña, revise en su correo el mensaje enviado y cambie su contraseña temporal.\n\nRecomendaciones:\n- Su nueva contraseña debe contener como mínimo 10 caracteres\n- Incluir una letra mayúscula, una letra minúscula, un número y un carácter especial\n- Tienes hasta hoy 8 P.M para cambiar tu contraseña temporal',
-                'Usuario Invalido-Habilitar': 'Su cuenta fue activada, Ingrese al sistema máximo hoy a las 8pm\n\nRecomendaciones:\n- Si continúa con problemas de acceso, comuníquese con el área de sistemas\n- Verifique que su navegador esté actualizado',
-                'Creación de Usuario': 'Se aperturó su cuenta, revise en su correo el mensaje enviado y cambie su contraseña temporal.\n\nEnlace: https://sihce.minsa.gob.pe/\n\nRecomendaciones:\n- Su nueva contraseña debe contener como mínimo 10 caracteres\n- Incluir una letra mayúscula, una letra minúscula, un número y un carácter especial\n- Tienes hasta hoy 8 P.M para cambiar tu contraseña temporal'
-            },
-            'SUSALUD': {
-                'Creación de Usuario': 'Se aperturó su cuenta, revise en su correo el mensaje enviado y cambie su contraseña temporal.\nEnlace:https://app8.susalud.gob.pe:8380/ \n\nRecomendaciones:\n- Guarde su número de ticket para futuras referencias\n- Si tiene dudas, contacte al área de sistemas',
-                'Contraseña Invalida-Reestablecer': 'Se reestableció su contraseña, revise en su correo el mensaje enviado y cambie su contraseña temporal.\n\nRecomendaciones:\n- Si no recibe el correo, revise su carpeta de spam\n- Intente nuevamente en 5 minutos si es necesario'
-            },
-            'FICHAS FAMILIARES': {
-                'Creación de Usuario': 'Su cuenta fue creada, usuario y contraseña es su Nro. DNI.\n\nEnlace: https://fichasfamiliares.minsa.gob.pe/\n\nRecomendaciones:\n- Guarde esta información en un lugar seguro\n- Se recomienda cambiar la contraseña al primer acceso',
-                'Contraseña Invalida-Reestablecer': 'Se reestableció su contraseña, para acceder use su Nro. DNI como contraseña\n\nRecomendaciones:\n- Se recomienda cambiar la contraseña temporal por una más segura\n- Si continúa con problemas, contacte al área de sistemas'
-            }    
-        };
-
-        // Función para obtener respuesta predeterminada
-        function obtenerRespuestaPredeterminada(sistema, motivo) {
-            if (respuestasPredeterminadas[sistema] && respuestasPredeterminadas[sistema][motivo]) {
-                return respuestasPredeterminadas[sistema][motivo];
-            }
-            return 'Estimado usuario, hemos atendido su solicitud. Por favor, contáctenos si tiene alguna duda adicional.';
-        }
+        let ticketsFiltrados = [];
+        let charts = {};
 
         // Cargar tickets al iniciar
         window.onload = function() {
             cargarTickets();
-            establecerFechaHoy();
+            configurarFechas();
         };
 
-        // Establecer fecha de hoy como máximo en filtros
-        function establecerFechaHoy() {
-            const hoy = new Date().toISOString().split('T')[0];
-            document.getElementById('filterFechaDesde').setAttribute('max', hoy);
-            document.getElementById('filterFechaHasta').setAttribute('max', hoy);
-            document.getElementById('filterFechaHasta').value = hoy;
-            // Establecer Fecha Desde en vacío para mostrar todos los tickets hasta hoy
-            document.getElementById('filterFechaDesde').value = '';
+        // Cambiar tabs
+        function cambiarTab(tabName) {
+            // Ocultar todos los tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Mostrar tab seleccionado
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.target.closest('.tab').classList.add('active');
+
+            // Si es dashboard, actualizar gráficos
+            if (tabName === 'dashboard') {
+                setTimeout(() => {
+                    crearGraficos();
+                }, 100);
+            }
         }
 
-        // Función para cargar tickets
+        // Configurar fechas por defecto (últimos 30 días)
+        function configurarFechas() {
+            const hoy = new Date();
+            const hace30Dias = new Date();
+            hace30Dias.setDate(hoy.getDate() - 30);
+            
+            document.getElementById('filterFechaDesde').value = hace30Dias.toISOString().split('T')[0];
+            document.getElementById('filterFechaHasta').value = hoy.toISOString().split('T')[0];
+        }
+
+        // Cargar tickets desde Google Sheets
         async function cargarTickets() {
             document.getElementById('loading').classList.add('show');
 
@@ -924,6 +1317,8 @@
                     actualizarStats();
                     cargarSistemas();
                     filtrarTickets(); // Aplicar filtros actuales
+                    crearGraficos(); // Crear gráficos del dashboard
+                    mostrarAlerta(`✅ ${todosLosTickets.length} tickets cargados exitosamente`, 'success');
                 } else {
                     mostrarAlerta('Error al cargar tickets: ' + result.message, 'danger');
                 }
@@ -937,73 +1332,43 @@
 
         // Función para parsear fecha en formato peruano
         function parsearFecha(fechaStr) {
-            // Formato esperado: "24/11/2025, 9:35:48 p. m." o "24/11/2025, 8:15:30 a.m."
             try {
-                // Separar fecha y hora
                 const partes = fechaStr.split(',');
                 if (partes.length < 2) return new Date(fechaStr);
                 
-                // Parsear fecha DD/MM/YYYY
                 const fecha = partes[0].trim().split('/');
                 if (fecha.length !== 3) return new Date(fechaStr);
                 
                 const dia = parseInt(fecha[0]);
-                const mes = parseInt(fecha[1]) - 1; // Mes es 0-indexed
+                const mes = parseInt(fecha[1]) - 1;
                 const año = parseInt(fecha[2]);
                 
-                // Parsear hora HH:MM:SS a.m./p.m.
-                const horaStr = partes[1].trim().toLowerCase().replace(/\s+/g, ' '); // Normalizar espacios
+                const horaStr = partes[1].trim().toLowerCase().replace(/\s+/g, ' ');
                 const espm = horaStr.includes('p');
                 const esam = horaStr.includes('a');
                 
-                // Extraer números de hora
                 const horaMatch = horaStr.match(/(\d+):(\d+):(\d+)/);
-                if (!horaMatch) {
-                    console.warn('No se pudo parsear hora:', fechaStr);
-                    return new Date(año, mes, dia);
-                }
+                if (!horaMatch) return new Date(año, mes, dia);
                 
-                let hora = parseInt(horaMatch[1]);
-                const minuto = parseInt(horaMatch[2]);
-                const segundo = parseInt(horaMatch[3]);
+                let horas = parseInt(horaMatch[1]);
+                const minutos = parseInt(horaMatch[2]);
+                const segundos = parseInt(horaMatch[3]);
                 
-                // Convertir a formato 24 horas
-                if (espm && hora !== 12) {
-                    hora += 12;
-                } else if (esam && hora === 12) {
-                    hora = 0;
-                }
+                if (espm && horas !== 12) horas += 12;
+                if (esam && horas === 12) horas = 0;
                 
-                const fechaFinal = new Date(año, mes, dia, hora, minuto, segundo);
-                
-                return fechaFinal;
+                return new Date(año, mes, dia, horas, minutos, segundos);
             } catch (e) {
-                console.error('Error parseando fecha:', fechaStr, e);
                 return new Date(fechaStr);
             }
         }
 
-        // Actualizar estadísticas
-        function actualizarStats() {
-            const total = todosLosTickets.length;
-            const pendientes = todosLosTickets.filter(t => t.estado === 'Pendiente').length;
-            const atendidos = todosLosTickets.filter(t => t.estado === 'Atendido').length;
-
-            document.getElementById('totalTickets').textContent = total;
-            document.getElementById('pendingTickets').textContent = pendientes;
-            document.getElementById('resolvedTickets').textContent = atendidos;
-        }
-
-        // Cargar sistemas en filtro (sin duplicados)
+        // Cargar sistemas en filtro
         function cargarSistemas() {
-            const sistemas = [...new Set(todosLosTickets.map(t => t.sistema))].filter(s => s);
+            const sistemas = [...new Set(todosLosTickets.map(t => t.sistema))].filter(s => s).sort();
             const select = document.getElementById('filterSistema');
             
-            // Limpiar opciones anteriores (excepto "Todos")
             select.innerHTML = '<option value="todos">Todos los sistemas</option>';
-            
-            // Ordenar alfabéticamente
-            sistemas.sort();
             
             sistemas.forEach(sistema => {
                 const option = document.createElement('option');
@@ -1011,6 +1376,46 @@
                 option.textContent = sistema;
                 select.appendChild(option);
             });
+        }
+
+        // Filtrar tickets
+        function filtrarTickets() {
+            const estado = document.getElementById('filterEstado').value;
+            const sistema = document.getElementById('filterSistema').value;
+            const fechaDesde = document.getElementById('filterFechaDesde').value;
+            const fechaHasta = document.getElementById('filterFechaHasta').value;
+            const searchText = document.getElementById('searchTicket').value.toLowerCase();
+
+            ticketsFiltrados = todosLosTickets.filter(ticket => {
+                const cumpleEstado = estado === 'todos' || ticket.estado === estado;
+                const cumpleSistema = sistema === 'todos' || ticket.sistema === sistema;
+                const cumpleBusqueda = !searchText || 
+                    ticket.ticket.toLowerCase().includes(searchText) ||
+                    ticket.nombre.toLowerCase().includes(searchText) ||
+                    (ticket.dni && ticket.dni.includes(searchText));
+                
+                let cumpleFecha = true;
+                if (fechaDesde || fechaHasta) {
+                    const fechaTicket = parsearFecha(ticket.fecha);
+                    if (fechaDesde) {
+                        const partes = fechaDesde.split('-');
+                        const desde = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+                        desde.setHours(0, 0, 0, 0);
+                        cumpleFecha = cumpleFecha && fechaTicket >= desde;
+                    }
+                    if (fechaHasta) {
+                        const partes = fechaHasta.split('-');
+                        const hasta = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+                        hasta.setHours(23, 59, 59, 999);
+                        cumpleFecha = cumpleFecha && fechaTicket <= hasta;
+                    }
+                }
+
+                return cumpleEstado && cumpleSistema && cumpleBusqueda && cumpleFecha;
+            });
+
+            mostrarTickets(ticketsFiltrados);
+            actualizarStats(true);
         }
 
         // Mostrar tickets en tabla
@@ -1044,14 +1449,14 @@
                     </td>
                     <td>
                         <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                            <button class="btn" onclick='verMasDetalles(${JSON.stringify(ticket).replace(/'/g, "&#39;")})' style="padding: 6px 12px; font-size: 12px; background: #3498db; color: white;">
+                            <button class="btn btn-primary btn-sm" onclick='verMasDetalles(${JSON.stringify(ticket).replace(/'/g, "&#39;")})'>
                                 <i class="fas fa-info-circle"></i> Ver Más
                             </button>
                             ${ticket.estado === 'Pendiente' ? 
-                                `<button class="btn btn-success" onclick='abrirModalResponder(${JSON.stringify(ticket).replace(/'/g, "&#39;")})' style="padding: 6px 12px; font-size: 12px;">
+                                `<button class="btn btn-success btn-sm" onclick='abrirModalResponder(${JSON.stringify(ticket).replace(/'/g, "&#39;")})'>
                                     <i class="fas fa-reply"></i> Responder
                                 </button>` :
-                                `<button class="btn" onclick='verRespuesta(${JSON.stringify(ticket.respuesta).replace(/'/g, "&#39;")})' style="padding: 6px 12px; font-size: 12px; background: #16a085; color: white;">
+                                `<button class="btn btn-primary btn-sm" onclick='verRespuesta(${JSON.stringify(ticket.respuesta).replace(/'/g, "&#39;")})'>
                                     <i class="fas fa-eye"></i> Respuesta
                                 </button>`
                             }
@@ -1061,59 +1466,314 @@
             `).join('');
         }
 
-        // Filtrar tickets
-        function filtrarTickets() {
-            const filterEstado = document.getElementById('filterEstado').value;
-            const filterSistema = document.getElementById('filterSistema').value;
-            const filterFechaDesde = document.getElementById('filterFechaDesde').value;
-            const filterFechaHasta = document.getElementById('filterFechaHasta').value;
-            const searchText = document.getElementById('searchTicket').value.toLowerCase();
+        // Actualizar estadísticas
+        function actualizarStats(usarFiltrados = false) {
+            const tickets = usarFiltrados ? ticketsFiltrados : todosLosTickets;
+            
+            const total = tickets.length;
+            const pendientes = tickets.filter(t => t.estado === 'Pendiente').length;
+            const atendidos = tickets.filter(t => t.estado === 'Atendido').length;
 
-            let ticketsFiltrados = [...todosLosTickets];
+            document.getElementById('totalTickets').textContent = total;
+            document.getElementById('pendingTickets').textContent = pendientes;
+            document.getElementById('resolvedTickets').textContent = atendidos;
+            
+            const percentAtendido = total > 0 ? Math.round((atendidos / total) * 100) : 0;
+            const percentPendiente = total > 0 ? Math.round((pendientes / total) * 100) : 0;
+            
+            const elemPercentAtendido = document.getElementById('percentAtendido');
+            const elemPercentPendiente = document.getElementById('percentPendiente');
+            
+            if (elemPercentAtendido) {
+                elemPercentAtendido.textContent = `${percentAtendido}% del total`;
+            }
+            if (elemPercentPendiente) {
+                elemPercentPendiente.textContent = `${percentPendiente}% del total`;
+            }
+            
+            const hayFiltros = usarFiltrados && (
+                document.getElementById('filterEstado')?.value !== 'todos' || 
+                document.getElementById('filterSistema')?.value !== 'todos' || 
+                document.getElementById('searchTicket')?.value !== ''
+            );
+            
+            const elemSubtitleTotal = document.getElementById('subtitleTotal');
+            const elemSubtitleAtendido = document.getElementById('subtitleAtendido');
+            const elemSubtitlePendiente = document.getElementById('subtitlePendiente');
+            
+            if (elemSubtitleTotal) {
+                elemSubtitleTotal.textContent = hayFiltros ? 'Según filtros aplicados' : 'Todos los registros';
+            }
+            if (elemSubtitleAtendido) {
+                elemSubtitleAtendido.textContent = hayFiltros ? 'Según filtros aplicados' : 'Casos resueltos';
+            }
+            if (elemSubtitlePendiente) {
+                elemSubtitlePendiente.textContent = hayFiltros ? 'Según filtros aplicados' : 'Requieren atención';
+            }
+        }
 
-            // Filtrar por estado
-            if (filterEstado !== 'todos') {
-                ticketsFiltrados = ticketsFiltrados.filter(t => t.estado === filterEstado);
+        // Crear todos los gráficos
+        function crearGraficos() {
+            crearGraficoMeses();
+            crearGraficoSistemas();
+            crearGraficoProfesiones();
+            crearGraficoMicrored();
+            crearGraficoEstablecimientos();
+            crearGraficoMotivos();
+        }
+
+        // Gráfico: Tickets por Mes
+        function crearGraficoMeses() {
+            const ctx = document.getElementById('chartMeses');
+            if (!ctx) return;
+
+            // Destruir gráfico existente
+            if (charts.meses) {
+                charts.meses.destroy();
             }
 
-            // Filtrar por sistema
-            if (filterSistema !== 'todos') {
-                ticketsFiltrados = ticketsFiltrados.filter(t => t.sistema === filterSistema);
-            }
+            // Agrupar por mes
+            const mesesCount = {};
+            todosLosTickets.forEach(ticket => {
+                const fecha = parsearFecha(ticket.fecha);
+                const mesAnio = `${fecha.toLocaleString('es-ES', {month: 'short'})} ${fecha.getFullYear()}`;
+                mesesCount[mesAnio] = (mesesCount[mesAnio] || 0) + 1;
+            });
 
-            // Filtrar por rango de fechas
-            if (filterFechaDesde) {
-                // Crear fecha local (no UTC)
-                const partes = filterFechaDesde.split('-');
-                const fechaDesde = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
-                fechaDesde.setHours(0, 0, 0, 0); // Inicio del día
-                ticketsFiltrados = ticketsFiltrados.filter(t => {
-                    const fechaTicket = parsearFecha(t.fecha);
-                    return fechaTicket >= fechaDesde;
-                });
-            }
+            // Ordenar por fecha
+            const mesesOrdenados = Object.entries(mesesCount).sort((a, b) => {
+                return new Date(a[0]) - new Date(b[0]);
+            });
 
-            if (filterFechaHasta) {
-                // Crear fecha local (no UTC)
-                const partes = filterFechaHasta.split('-');
-                const fechaHasta = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
-                fechaHasta.setHours(23, 59, 59, 999); // Fin del día
-                ticketsFiltrados = ticketsFiltrados.filter(t => {
-                    const fechaTicket = parsearFecha(t.fecha);
-                    return fechaTicket <= fechaHasta;
-                });
-            }
+            charts.meses = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: mesesOrdenados.map(m => m[0]),
+                    datasets: [{
+                        label: 'Tickets',
+                        data: mesesOrdenados.map(m => m[1]),
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        }
 
-            // Filtrar por búsqueda (ticket, nombre o DNI)
-            if (searchText) {
-                ticketsFiltrados = ticketsFiltrados.filter(t => 
-                    (t.ticket && t.ticket.toLowerCase().includes(searchText)) ||
-                    (t.nombre && t.nombre.toLowerCase().includes(searchText)) ||
-                    (t.dni && t.dni.includes(searchText))
-                );
-            }
+        // Gráfico: Tickets por Sistema
+        function crearGraficoSistemas() {
+            const ctx = document.getElementById('chartSistemas');
+            if (!ctx) return;
 
-            mostrarTickets(ticketsFiltrados);
+            if (charts.sistemas) charts.sistemas.destroy();
+
+            const sistemasCount = {};
+            todosLosTickets.forEach(ticket => {
+                if (ticket.sistema) {
+                    sistemasCount[ticket.sistema] = (sistemasCount[ticket.sistema] || 0) + 1;
+                }
+            });
+
+            const sistemasOrdenados = Object.entries(sistemasCount).sort((a, b) => b[1] - a[1]);
+
+            charts.sistemas = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: sistemasOrdenados.map(s => s[0]),
+                    datasets: [{
+                        data: sistemasOrdenados.map(s => s[1]),
+                        backgroundColor: ['#3498db', '#27ae60', '#f39c12', '#e74c3c', '#9b59b6', '#16a085']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        // Gráfico: Tickets por Profesión (Top 10)
+        function crearGraficoProfesiones() {
+            const ctx = document.getElementById('chartProfesiones');
+            if (!ctx) return;
+
+            if (charts.profesiones) charts.profesiones.destroy();
+
+            const profesionesCount = {};
+            todosLosTickets.forEach(ticket => {
+                if (ticket.profesion) {
+                    profesionesCount[ticket.profesion] = (profesionesCount[ticket.profesion] || 0) + 1;
+                }
+            });
+
+            const profesionesOrdenadas = Object.entries(profesionesCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            charts.profesiones = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: profesionesOrdenadas.map(p => p[0]),
+                    datasets: [{
+                        label: 'Tickets',
+                        data: profesionesOrdenadas.map(p => p[1]),
+                        backgroundColor: '#16a085'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfico: Tickets por Microred
+        function crearGraficoMicrored() {
+            const ctx = document.getElementById('chartMicrored');
+            if (!ctx) return;
+
+            if (charts.microred) charts.microred.destroy();
+
+            const microredCount = {};
+            todosLosTickets.forEach(ticket => {
+                if (ticket.microred) {
+                    microredCount[ticket.microred] = (microredCount[ticket.microred] || 0) + 1;
+                }
+            });
+
+            const microredOrdenadas = Object.entries(microredCount).sort((a, b) => b[1] - a[1]);
+
+            charts.microred = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: microredOrdenadas.map(m => m[0]),
+                    datasets: [{
+                        label: 'Tickets',
+                        data: microredOrdenadas.map(m => m[1]),
+                        backgroundColor: '#9b59b6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfico: Top Establecimientos
+        function crearGraficoEstablecimientos() {
+            const ctx = document.getElementById('chartEstablecimientos');
+            if (!ctx) return;
+
+            if (charts.establecimientos) charts.establecimientos.destroy();
+
+            const establecimientosCount = {};
+            todosLosTickets.forEach(ticket => {
+                if (ticket.establecimiento) {
+                    establecimientosCount[ticket.establecimiento] = (establecimientosCount[ticket.establecimiento] || 0) + 1;
+                }
+            });
+
+            const establecimientosOrdenados = Object.entries(establecimientosCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            charts.establecimientos = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: establecimientosOrdenados.map(e => e[0]),
+                    datasets: [{
+                        label: 'Tickets',
+                        data: establecimientosOrdenados.map(e => e[1]),
+                        backgroundColor: '#e74c3c'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfico: Motivos de Soporte
+        function crearGraficoMotivos() {
+            const ctx = document.getElementById('chartMotivos');
+            if (!ctx) return;
+
+            if (charts.motivos) charts.motivos.destroy();
+
+            const motivosCount = {};
+            todosLosTickets.forEach(ticket => {
+                if (ticket.motivo) {
+                    motivosCount[ticket.motivo] = (motivosCount[ticket.motivo] || 0) + 1;
+                }
+            });
+
+            const motivosOrdenados = Object.entries(motivosCount).sort((a, b) => b[1] - a[1]);
+
+            charts.motivos = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: motivosOrdenados.map(m => m[0]),
+                    datasets: [{
+                        data: motivosOrdenados.map(m => m[1]),
+                        backgroundColor: ['#3498db', '#27ae60', '#f39c12', '#e74c3c', '#9b59b6', '#16a085', '#34495e']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
         }
 
         // Limpiar filtros
@@ -1142,11 +1802,60 @@
             document.getElementById('infoMotivo').textContent = ticket.motivo;
             document.getElementById('infoDescripcion').textContent = ticket.descripcion || 'Sin descripción';
 
-            // Obtener respuesta predeterminada
             const respuestaPredeterminada = obtenerRespuestaPredeterminada(ticket.sistema, ticket.motivo);
             document.getElementById('respuestaTexto').value = respuestaPredeterminada;
 
             document.getElementById('modalResponder').classList.add('show');
+        }
+
+        // Respuestas predeterminadas según Sistema y Motivo
+        // Respuestas predeterminadas según Sistema y Motivo (versión mejorada)
+        const respuestasPredeterminadas = {
+        'HIS MINSA': {
+             'Olvidé mi contraseña': 
+                'La contraseña ha sido restablecida. Revise su correo para obtener la nueva clave temporal y proceda a cambiarla.\n\nRecomendaciones:\n- La nueva contraseña debe tener mínimo 10 caracteres\n- Incluir mayúsculas, minúsculas, números y un carácter especial\n- Cambiar la contraseña temporal antes de las 8:00 p. m. de hoy',
+
+             'Usuario Inactivo-Bloqueado': 
+                'Su usuario ha sido habilitado. Ingrese al sistema antes de las 8:00 p. m. de hoy.\n\nRecomendaciones:\n- Si persiste el inconveniente, comuníquese con el área de sistemas\n- Asegúrese de utilizar un navegador actualizado',
+
+             'Creación de Usuario': 
+                'Su usuario ha sido creado. Revise su correo para obtener la contraseña temporal y realizar el cambio correspondiente.\n\nEnlace: https://his.minsa.gob.pe/\n\nRecomendaciones:\n- La nueva contraseña debe tener mínimo 10 caracteres\n- Incluir mayúsculas, minúsculas, números y un carácter especial\n- Cambiar la contraseña temporal antes de las 8:00 p. m. de hoy\n- Su estadístico de microred debe asignarle su establecimiento de salud'
+            },
+
+        'SIHCE': {
+            'Olvidé mi contraseña': 
+                'La contraseña ha sido restablecida. Revise su correo para obtener la clave temporal y realizar el cambio.\n\nRecomendaciones:\n- La contraseña debe tener mínimo 10 caracteres\n- Incluir mayúsculas, minúsculas, números y un carácter especial\n- Cambiar la contraseña temporal antes de las 8:00 p. m. de hoy',
+
+            'Usuario Inactivo-Bloqueado': 
+                'Su usuario ha sido habilitado. Puede ingresar al sistema hasta las 8:00 p. m. de hoy.\n\nRecomendaciones:\n- Si continúa con problemas, comuníquese con el área de sistemas\n- Verifique que su navegador esté actualizado',
+
+            'Creación de Usuario': 
+                'Su usuario ha sido creado. Revise su correo para obtener la contraseña temporal y realizar el cambio correspondiente.\n\nEnlace: https://sihce.minsa.gob.pe/\n\nRecomendaciones:\n- La contraseña debe tener mínimo 10 caracteres\n- Incluir mayúsculas, minúsculas, números y un carácter especial\n- Cambiar la contraseña temporal antes de las 8:00 p. m. de hoy'
+            },
+
+        'SUSALUD': {
+            'Creación de Usuario': 
+                'Su usuario ha sido creado. Revise su correo para obtener la contraseña temporal.\n\nEnlace: https://app8.susalud.gob.pe:8380/\n\nRecomendaciones:\n- Conserve el número de ticket para futuras consultas\n- Si tiene dudas adicionales, comuníquese con el área de sistemas',
+
+            'Olvidé mi contraseña': 
+                'La contraseña ha sido restablecida. Revise su correo para obtener la nueva clave temporal.\n\nRecomendaciones:\n- Si no encuentra el mensaje, revise su bandeja de spam\n- Intente nuevamente después de 5 minutos en caso de no recibir el correo'
+            },
+
+        'FICHAS FAMILIARES': {
+            'Creación de Usuario': 
+                'Su cuenta ha sido creada. Su usuario y contraseña inicial corresponden a su número de DNI.\n\nEnlace: https://fichasfamiliares.minsa.gob.pe/\n\nRecomendaciones:\n- Guarde esta información de forma segura\n- Cambie la contraseña en su primer acceso',
+
+            'Olvidé mi contraseña': 
+                'La contraseña ha sido restablecida. Para acceder, use su número de DNI como clave temporal.\n\nRecomendaciones:\n- Cambie la contraseña temporal por una más segura\n- Si presenta inconvenientes, comuníquese con el área de sistemas'
+            }
+        };
+
+        // Función para obtener respuesta predeterminada
+        function obtenerRespuestaPredeterminada(sistema, motivo) {
+            if (respuestasPredeterminadas[sistema] && respuestasPredeterminadas[sistema][motivo]) {
+                return respuestasPredeterminadas[sistema][motivo];
+            }
+            return 'Estimado usuario, hemos atendido su solicitud. Por favor, contáctenos si tiene alguna duda adicional.';
         }
 
         // Cerrar modal
@@ -1154,40 +1863,32 @@
             document.getElementById('modalResponder').classList.remove('show');
         }
 
-        // Abrir modal "Ver Más Detalles"
+        // Ver más detalles
         function verMasDetalles(ticket) {
-            // Llenar información del ticket
             document.getElementById('detTicket').textContent = ticket.ticket || 'N/A';
             document.getElementById('detFecha').textContent = ticket.fecha || 'N/A';
             document.getElementById('detEstado').innerHTML = `<span class="badge badge-${ticket.estado === 'Pendiente' ? 'pending' : 'resolved'}">${ticket.estado}</span>`;
             
-            // Llenar datos del usuario
             document.getElementById('detDNI').textContent = ticket.dni || 'N/A';
             document.getElementById('detNombre').textContent = ticket.nombre || 'N/A';
             document.getElementById('detFechaNac').textContent = ticket.fechaNacimiento || 'N/A';
             
-            // Llenar contacto
             document.getElementById('detCorreo').textContent = ticket.correo || 'N/A';
             document.getElementById('detWhatsApp').textContent = ticket.whatsapp || 'N/A';
             
-            // Llenar información profesional
             document.getElementById('detProfesion').textContent = ticket.profesion || 'N/A';
             document.getElementById('detNroColegio').textContent = ticket.nroColegio || 'N/A';
             
-            // Llenar establecimiento
             document.getElementById('detMicrored').textContent = ticket.microred || 'N/A';
             document.getElementById('detEstablecimiento').textContent = ticket.establecimiento || 'N/A';
             
-            // Llenar contrato
             document.getElementById('detModalidad').textContent = ticket.modalidad || 'N/A';
             document.getElementById('detFinContrato').textContent = ticket.finContrato || 'N/A';
             
-            // Llenar información del soporte
             document.getElementById('detSistema').textContent = ticket.sistema || 'N/A';
             document.getElementById('detMotivo').textContent = ticket.motivo || 'N/A';
             document.getElementById('detDescripcion').textContent = ticket.descripcion || 'Sin descripción adicional';
             
-            // Mostrar respuesta si existe
             const respuestaBox = document.getElementById('respuestaBox');
             if (ticket.estado === 'Atendido' && ticket.respuesta) {
                 document.getElementById('detRespuesta').textContent = ticket.respuesta;
@@ -1196,11 +1897,10 @@
                 respuestaBox.style.display = 'none';
             }
             
-            // Abrir modal
             document.getElementById('modalVerMas').classList.add('show');
         }
 
-        // Cerrar modal "Ver Más"
+        // Cerrar modal Ver Más
         function cerrarModalVerMas() {
             document.getElementById('modalVerMas').classList.remove('show');
         }
@@ -1221,12 +1921,10 @@
                 return;
             }
 
-            // IMPORTANTE: Preparar WhatsApp ANTES del fetch para evitar bloqueo de pop-ups
             const mensaje = encodeURIComponent(`Hola ${nombre}, respuesta a su ticket ${ticket}:\n\n${respuesta}\n\nÁrea de Soporte - Red de Salud Puerto Inca`);
             const numeroLimpio = whatsapp.replace(/\D/g, '');
             const urlWhatsApp = `https://wa.me/51${numeroLimpio}?text=${mensaje}`;
             
-            // Detectar si es móvil
             const esMobil = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
             document.getElementById('loading').classList.add('show');
@@ -1255,11 +1953,8 @@
                 if (result.status === 'success') {
                     mostrarAlerta('✅ Respuesta enviada exitosamente. Correo enviado al usuario.', 'success');
                     
-                    // Abrir WhatsApp INMEDIATAMENTE después de respuesta exitosa
-                    // Sin setTimeout para evitar bloqueo de navegadores
                     try {
                         if (esMobil) {
-                            // En móvil: crear un link temporal y hacer click
                             const link = document.createElement('a');
                             link.href = urlWhatsApp;
                             link.target = '_blank';
@@ -1268,25 +1963,12 @@
                             link.click();
                             document.body.removeChild(link);
                         } else {
-                            // En PC: abrir en nueva pestaña directamente
-                            const ventana = window.open(urlWhatsApp, '_blank');
-                            if (!ventana) {
-                                // Si fue bloqueado, mostrar mensaje
-                                console.warn('Pop-up bloqueado. Intenta permitir pop-ups para este sitio.');
-                                // Intentar con link como alternativa
-                                const link = document.createElement('a');
-                                link.href = urlWhatsApp;
-                                link.target = '_blank';
-                                link.click();
-                            }
+                            window.open(urlWhatsApp, '_blank');
                         }
                     } catch (whatsappError) {
                         console.error('Error al abrir WhatsApp:', whatsappError);
-                        // Mostrar el link como alternativa
-                        mostrarAlerta(`WhatsApp: ${urlWhatsApp}`, 'info');
                     }
 
-                    // Recargar tickets después de un momento
                     setTimeout(() => {
                         cargarTickets();
                     }, 2000);
@@ -1310,7 +1992,7 @@
         function mostrarAlerta(mensaje, tipo) {
             const alert = document.getElementById('alert');
             alert.className = `alert alert-${tipo} show`;
-            alert.innerHTML = `<i class="fas fa-${tipo === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i> ${mensaje}`;
+            alert.innerHTML = `<i class="fas fa-${tipo === 'success' ? 'check-circle' : tipo === 'info' ? 'info-circle' : 'exclamation-triangle'}"></i> ${mensaje}`;
 
             setTimeout(() => {
                 alert.classList.remove('show');
